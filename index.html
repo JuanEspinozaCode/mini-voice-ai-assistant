@@ -57,6 +57,7 @@
       }
     };
 
+    //Fetches the AI response when the user speaks
     recognition.onresult = async (event) => {
       listening = false;
       toggleBtn.textContent = 'Thinking...';
@@ -82,6 +83,7 @@
           throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
 
+        //Remove asterisks from the AI response
         const json = await response.json();
         const aiText = json.choices[0].message.content.trim();
         const cleanText = aiText.replace(/\*/g, '');
@@ -118,7 +120,7 @@
 
       const utterance = new SpeechSynthesisUtterance(text);
 
-      //Sets the voice aside from the default
+      //Sets an alternate voice instead of the default one
       function setVoice() {
         const voices = speechSynthesis.getVoices();
         utterance.voice = voices.find(v =>
