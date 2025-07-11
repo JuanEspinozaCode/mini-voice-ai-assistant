@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Juan Espinoza's Voice AI Assistant</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+  <div class="container">
+  <h1>Mini Voice AI Assistant</h1>
+  <div class="container2">
+  <button id="toggleBtn">Start Talking</button>
+  </div>
+  <div class="container2">
+  <div id="transcript"><strong>You said:</strong> <span></span></div>
+  </div>
+  <div class="container2">
+  <div id="response"><strong>AI says:</strong> <span></span></div>
+  </div>
+  </div>
+
+  <script>
+    const toggleBtn = document.getElementById('toggleBtn');
+    const transcriptSpan = document.querySelector('#transcript span');
+    const responseSpan = document.querySelector('#response span');
+
+    const apiKey = ""; // Removed for security reasons. Replace with your actual Groq API key
+    const groqEndpoint = "https://api.groq.com/openai/v1/chat/completions";
+
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    let listening = false;
+    let speaking = false;
+    let currentUtterance = null;
+
+    toggleBtn.onclick = () => {
+      if (!listening && !speaking) {
+        // Start listening
+        transcriptSpan.textContent = '';
+        responseSpan.textContent = '';
+        recognition.start();
+        listening = true;
+        toggleBtn.textContent = 'Listening...';
+      } else if (listening) {
+        // Stop listening
+        recognition.stop();
+        listening = false;
+        toggleBtn.textContent = 'Start Talking';
+      } else if (speaking) {
+        // Stop speaking
+        speechSynthesis.cancel();
+        speaking = false;
+        toggleBtn.textContent = 'Start Talking';
+      }
+    };
+
+    recognition.onresult = async (event) => {
+      listening = false;
+      toggleBtn.textContent = 'Thinking...';
+
+      const spokenText = event.results[0][0].transcript;
+      transcriptSpan.textContent = spokenText;
+
+      try {
+        const response = await fetch(groqEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: "compound-beta",
+            messages: [{ role: "user", content: spokenText }]
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const json = await response.json();
+        const aiText = json.choices[0].message.content.trim();
+        const cleanText = aiText.replace(/\*/g, '');
+
+        responseSpan.textContent = cleanText;
+        speak(cleanText);
+
+      } catch (error) {
+        responseSpan.textContent = "Error: " + error.message;
+        toggleBtn.textContent = 'Start Talking';
+      }
+    };
+
+    recognition.onerror = (event) => {
+      listening = false;
+      toggleBtn.textContent = 'Start Talking';
+      alert("Speech recognition error: " + event.error);
+    };
+
+    recognition.onend = () => {
+      listening = false;
+      if (!speaking) {
+        toggleBtn.textContent = 'Start Talking';
+      }
+    };
+
+    function speak(text) {
+      speaking = true;
+      toggleBtn.textContent = 'Stop';
+
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      //Sets the voice aside from the default
+      function setVoice() {
+        const voices = speechSynthesis.getVoices();
+        utterance.voice = voices.find(v =>
+          v.lang.startsWith('en') && v.name.toLowerCase().includes('female')
+        ) || voices[0];
+
+        speechSynthesis.speak(utterance);
+      }
+
+      utterance.onend = () => {
+        speaking = false;
+        toggleBtn.textContent = 'Start Talking';
+      };
+
+      if (speechSynthesis.getVoices().length === 0) {
+        speechSynthesis.addEventListener('voiceschanged', setVoice);
+      } else {
+        setVoice();
+      }
+    }
+  </script>
+</body>
+</html>
+
