@@ -9,7 +9,7 @@ A browser-based voice assistant that listens to your speech, processes it using 
 ## Preview
 ![Snapshot](images/1.png)
 ![Snapshot](images/2.png)
-<video controls src="images/3.mp4" title="Demo"></video>
+
 ---
 
 ## Tech Stack
