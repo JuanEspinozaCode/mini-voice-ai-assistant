@@ -2,7 +2,7 @@
 
 A browser-based voice assistant that listens to your speech, processes it using Groq's `compound-beta` large language model (LLM), and speaks the AI’s response back to you.
 
-**Assisted by ChatGPT AI** – This project was created and refined with help from ChatGPT to demonstrate a working voice assistant using Groq, HTML, JavaScript, and browser-native speech capabilities.
+This project was created to demonstrate a working voice assistant using Groq, HTML, JavaScript, and browser-native speech capabilities.
 
 ---
 
